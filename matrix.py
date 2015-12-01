@@ -1,17 +1,23 @@
 __author__ = 'student'
+import copy
+
 class Matrix:
     def __init__(self,a,b=None):
         self._arr=[]
         if type(a) is list:
+            if b is not None:
+                raise ValueError('Wrong Arguments')
+            if len(a)==0:
+                raise ValueError('Wrong Arguments')
             self.m=len(a)
             if type(a[0]) is list:
                 self.n=len(a[0])
             else:
                 self.n=1
-            for i in range(m):
+            for i in range(self.m):
                 self._arr.append([])
-                for j in range(n):
-                    self._arr.append(a[i][j])
+                for j in range(self.n):
+                    self._arr[i].append(a[i][j])
         else:
             if type(a) is tuple:
                (self.m,self.n)=a
@@ -40,6 +46,8 @@ class Matrix:
 
     def __eq__(self, other):
         result = True
+        if self.get_size()!=other.get_size():
+            raise RuntimeError('Wrong Matrix Size')
         for i in range(self.m):
             for j in range(self.n):
                 if self.get(i,j) != other.get(i,j):
@@ -50,12 +58,17 @@ class Matrix:
         return result
 
     def __add__(self, other):
+        if self.get_size()!=other.get_size():
+            raise RuntimeError('Wrong Matrix Size')
+
         A=Matrix(self.get_size())
         for i in range(self.m):
             for j in range(self.n):
                 A.set(i, j, self.get(i,j)+other.get(i,j))
         return A
     def __sub__(self, other):
+        if self.get_size()!=other.get_size():
+            raise RuntimeError('Wrong Matrix Size')
         A=Matrix(self.get_size())
         for i in range(self.m):
             for j in range(self.n):
@@ -71,6 +84,8 @@ class Matrix:
             return A
         else: # умножение матриц
             if type(other) is Matrix:
+                if self.get_n()!=other.get_m():
+                    raise RuntimeError('Wrong Matrix Size')
                 A=Matrix(self.get_m(),other.get_n())
                 for i in range(self.m):
                     for j in range(other.get_n()):
@@ -98,6 +113,9 @@ class Matrix:
         '''
         рекурсивно вычисляем определитель
         '''
+        if self.get_m()!=self.get_n():
+            raise RuntimeError('Wrong Matrix Size')
+
         if len(self._arr)==1:
            # для простоты считаем что мартрица квадратная
             return self._arr[0][0]
@@ -106,24 +124,29 @@ class Matrix:
         else:
             result=0
             for i in range(len(self._arr[0])):
-                A=self._arr.copy()
-                A.pop(0) # вычеркиваем первую строку
+                A=copy.deepcopy(self._arr)
                 for j in range(len(A)): # вычеркиваем i столбец
-                    A[0].pop(j)
+                    A[j].pop(i)
+                A.pop(0) # вычеркиваем первую строку
                 result+=self._arr[0][i]*(-1)**(i)*Matrix(A).determinant()
             return result
 
     def invert(self):
-        pass
-    #FIXME
         # заменить каждый элемент на алгебраическое дополнение
-        A=Matrix(self.get_n(),self.get_m())
-#        for i in range(self.m):
-#            for j in range(self.n):
-
+        d=self.determinant()
+        A=Matrix(self.get_m(),self.get_m())
+        for i in range(self.m):
+            for j in range(self.n):
+                B=copy.deepcopy(self._arr)
+                for k in range(len(B)): # вычеркнем столбец j
+                    B[k].pop(j)
+                B.pop(i) # вычеркнем строку i
+                A.set(i, j, (-1)**(i+j)*Matrix(B).determinant() )# посчитаем алг. дополнение
         # транспонировать порученную матрицу
+        A=A.transpose()
         # разделить матрицу на число - определитель исходной матрицы
-
+        A/=d
+        return A
 
 
 
